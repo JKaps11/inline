@@ -1,5 +1,5 @@
 import { Metadata } from "../../common/metadata";
-import { Note, NoteType } from "../types";
+import { Note, NoteType } from "../notes";
 
 export class TextNote extends Metadata implements Note {
     private title: string;

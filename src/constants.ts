@@ -1,0 +1,1 @@
+export const DEFAULT_SUPPORT_MESSAGE: string = "Please contact kapsjosh11@gmail.com for support";

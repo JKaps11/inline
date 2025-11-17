@@ -1,5 +1,5 @@
 import { TextNote } from "../models/noteTypes/textNote";
-import { Note, NoteType } from "../models/types";
+import { Note, NoteType } from "../models/notes";
 
 class NoteFactory {
     create(title: string, type: NoteType): Note {

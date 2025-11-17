@@ -1,5 +1,5 @@
 import { TreeItem } from "vscode";
-import { Note } from "../models/types";
+import { Note } from "../models/notes";
 
 export class NoteMenuItem extends TreeItem {
     constructor(note: Note) {

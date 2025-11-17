@@ -1,6 +1,11 @@
-import { ProviderResult, TreeDataProvider, TreeItem, window } from "vscode";
+import { FileType, ProviderResult, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window } from "vscode";
 import { NoteMenuItem } from "./noteMenuItem";
 import { FolderMenuItem } from "./folderMenuItem";
+import { FileSystemUtils } from "../common/fileSystem";
+import logService from "../common/logger";
+import { handleUnkownError } from "../common/vscodeErrorHandler";
+import { ErrorForDisplay } from "../models/errors";
+import { Folder } from "../models/folder";
 
 export class NoteMenuProvider implements TreeDataProvider<(NoteMenuItem | FolderMenuItem)> {
     constructor() { }
@@ -12,11 +17,31 @@ export class NoteMenuProvider implements TreeDataProvider<(NoteMenuItem | Folder
         }
 
         if (element instanceof FolderMenuItem) {
-            const child_ids: string[] = element.folder.getChildIds();
+            const fsUtils = new FileSystemUtils();
+            const children = element.folder.getChildren();
+            const relativePath: string = element.folder.getRelativePath();
 
+            try {
+                const folderContents = fsUtils.retrieveFolderContents(relativePath);
+                folderContents.then((contents) => {
+                    contents.map((content) => {
+                        switch (content[1]) {
+                            case FileType.Directory:
+                                // get folder
 
-            //TODO: return children nodes
-            return Promise.resolve([]);
+                                const folder: Folder;
+                                return new FolderMenuItem(folder, TreeItemCollapsibleState.Collapsed);
+                                break;
+                            case FileType.File:
+                                break;
+                            default:
+                                window.showWarningMessage("There is an unkown folder type in your notes folder");
+                        }
+                    });
+                });
+            } catch (error: unknown) {
+                handleUnkownError(error);
+            }
         }
 
         return Promise.resolve([]);
