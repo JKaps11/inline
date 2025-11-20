@@ -1,3 +1,5 @@
+import { FileSystemUtils } from "../common/fileSystem";
+import logService from "../common/logger";
 import { ErrorForDisplay, InternalError } from "./errors";
 
 interface ChildItem {
@@ -10,12 +12,14 @@ export class Folder {
     private name: string;
     private readonly relativePath: string;
     /**We are using child names for indexing and behavior since the file system saves our state and file names are unique*/
-    private children: ChildItem[] = [];
+    // private children: ChildItem[] = [];
 
     constructor(name: string, relativePath: string) {
         this.id = crypto.randomUUID();
         this.name = name;
         this.relativePath = relativePath;
+
+        logService.info(`Creating a new folder with id: ${this.id}, name: ${name}, and relative path: ${relativePath}`);
     }
 
     public getId(): string {
@@ -34,33 +38,33 @@ export class Folder {
         this.name = name;
     }
 
-    public addChild(fileId: string, name: string): void {
-        this.children.forEach((child: ChildItem) => {
-            if (child.name === name) {
-                throw new ErrorForDisplay(`File of name: ${name} already exists in this directory`);
-            }
+    // public addChild(fileId: string, name: string): void {
+    //     this.children.forEach((child: ChildItem) => {
+    //         if (child.name === name) {
+    //             throw new ErrorForDisplay(`File of name: ${name} already exists in this directory`);
+    //         }
 
-            if (child.id === fileId) {
-                throw new InternalError(`Id collision happened for id ${fileId}`);
-            }
-        });
+    //         if (child.id === fileId) {
+    //             throw new InternalError(`Id collision happened for id ${fileId}`);
+    //         }
+    //     });
 
-        this.children.push({
-            id: fileId,
-            name: name,
-        });
-    }
+    //     this.children.push({
+    //         id: fileId,
+    //         name: name,
+    //     });
+    // }
 
-    public getChildren(): ChildItem[] {
-        return this.children;
-    }
+    // public getChildren(): ChildItem[] {
+    //     return this.children;
+    // }
 
-    public deleteChild(name: string): void {
-        const startLength = this.children.length;
-        this.children.filter((child: ChildItem) => child.name !== name);
-        if (startLength === this.children.length) {
-            // This should be an internall error unless we let user give a name we don't provider (cli feature)
-            throw new InternalError(`File with name: ${name} not found in directory: ${this.relativePath}`);
-        }
-    }
+    // public deleteChild(name: string): void {
+    //     const startLength = this.children.length;
+    //     this.children.filter((child: ChildItem) => child.name !== name);
+    //     if (startLength === this.children.length) {
+    //         // This should be an internal error unless we let user give a name we don't provider (cli feature)
+    //         throw new InternalError(`File with name: ${name} not found in directory: ${this.relativePath}`);
+    //     }
+    // }
 }

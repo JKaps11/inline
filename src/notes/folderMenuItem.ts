@@ -8,8 +8,7 @@ export class FolderMenuItem extends TreeItem {
         public readonly collapsibleState: TreeItemCollapsibleState
     ) {
         super(folder.getName(), collapsibleState);
-        this.command;
-        this.iconPath;
+        this.iconPath; //TODO hook up folder icon
         this.id = folder.getId();
         this.folder = folder;
     }

@@ -6,7 +6,7 @@ export enum NoteType {
     Markdown
 }
 
-export interface Note extends Metadata {
+export interface Note {
     type: NoteType;
 
     getTitle: () => string;

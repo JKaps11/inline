@@ -1,11 +1,15 @@
 import { commands, ExtensionContext, window } from 'vscode';
 import logService from './common/logger';
 import { NoteMenuProvider } from './notes/noteMenuProvider';
+import { FileSystemUtils } from './common/fileSystem';
 
 export function activate(context: ExtensionContext) {
-	//TODO: register activity bar
+	const fsUtils: FileSystemUtils = new FileSystemUtils();
+
+	// load all of the notes file in directory
+	// create vscode views and such
 	window.createTreeView('inline_notes_view', {
-		treeDataProvider: new NoteMenuProvider(),
+		treeDataProvider: new NoteMenuProvider(fsUtils),
 		showCollapseAll: true,
 	});
 

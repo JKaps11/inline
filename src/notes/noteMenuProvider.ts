@@ -1,46 +1,46 @@
-import { FileType, ProviderResult, TreeDataProvider, TreeItem, TreeItemCollapsibleState, window } from "vscode";
+import { FileType, ProviderResult, TreeDataProvider, TreeItem, TreeItemCollapsibleState, Uri, window } from "vscode";
 import { NoteMenuItem } from "./noteMenuItem";
 import { FolderMenuItem } from "./folderMenuItem";
 import { FileSystemUtils } from "../common/fileSystem";
-import logService from "../common/logger";
-import { handleUnkownError } from "../common/vscodeErrorHandler";
-import { ErrorForDisplay } from "../models/errors";
 import { Folder } from "../models/folder";
+import { handleVsCodeError } from "../common/vscodeErrorHandler";
 
 export class NoteMenuProvider implements TreeDataProvider<(NoteMenuItem | FolderMenuItem)> {
-    constructor() { }
+    constructor(
+        private fsUtils: FileSystemUtils
+    ) { }
 
     getChildren(element?: NoteMenuItem | FolderMenuItem | undefined): ProviderResult<(NoteMenuItem | FolderMenuItem)[]> {
         if (!element) {
-            window.showInformationMessage("You have no notes or folders in your repository");
+            const notesFolder: Folder = this.fsUtils.getNotesFolder();
+            const notesFolderMenuItem: FolderMenuItem = new FolderMenuItem(notesFolder, TreeItemCollapsibleState.Expanded);
             return Promise.resolve([]);
         }
 
         if (element instanceof FolderMenuItem) {
-            const fsUtils = new FileSystemUtils();
-            const children = element.folder.getChildren();
             const relativePath: string = element.folder.getRelativePath();
 
             try {
-                const folderContents = fsUtils.retrieveFolderContents(relativePath);
+                const folderContents = this.fsUtils.retrieveFolderContents(relativePath);
                 folderContents.then((contents) => {
-                    contents.map((content) => {
+                    return contents.map((content) => {
+                        const name: string = content[0];
+                        const newRelativePath: string = relativePath + "/" + name;
+
                         switch (content[1]) {
                             case FileType.Directory:
-                                // get folder
-
-                                const folder: Folder;
-                                return new FolderMenuItem(folder, TreeItemCollapsibleState.Collapsed);
-                                break;
+                                const newFolder: Folder = new Folder(name, newRelativePath);
+                                return new FolderMenuItem(newFolder, TreeItemCollapsibleState.Collapsed);
                             case FileType.File:
-                                break;
+                                const noteUri: Uri = this.fsUtils.getFullPath(newRelativePath);
+                                return new NoteMenuItem(name, noteUri);
                             default:
                                 window.showWarningMessage("There is an unkown folder type in your notes folder");
                         }
                     });
                 });
             } catch (error: unknown) {
-                handleUnkownError(error);
+                handleVsCodeError(error);
             }
         }
 
