@@ -20,13 +20,13 @@ export class FileSystemUtils {
         if (!workspace.fs.isWritableFileSystem('file')) {
             throw new ErrorForDisplay("Workspace system is not writable");
         }
-        this.notesFilePath = Uri.joinPath(workspaceFolder.uri, "/notes");
+        this.notesFilePath = Uri.joinPath(workspaceFolder.uri, "/inline-notes");
         this.codeFilePath = Uri.joinPath(this.notesFilePath, "/code");
 
         //TODO: this is really unstable. maybe an ensure notes file is created or something
         this.createFolder("");
 
-        this.notesFolder = new Folder("notes", "");
+        this.notesFolder = new Folder("inline-notes", "");
     }
 
     public getNotesFolder(): Folder {
@@ -78,6 +78,15 @@ export class FileSystemUtils {
         try {
             const newFilePath: Uri = Uri.joinPath(this.notesFilePath, relativePath);
             await workspace.fs.createDirectory(newFilePath);
+        } catch (error: unknown) {
+            throw AppError.fromUnknown(error, "Error while creating a folder");
+        }
+    }
+
+    public async deleteFolder(relativePath: string): Promise<void> {
+        try {
+            const deleteFilePath: Uri = Uri.joinPath(this.notesFilePath, relativePath);
+            await workspace.fs.delete(deleteFilePath);
         } catch (error: unknown) {
             throw AppError.fromUnknown(error, "Error while creating a folder");
         }

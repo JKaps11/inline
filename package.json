@@ -22,7 +22,7 @@
         "title": "Add File"
       },
       {
-        "command": "inline.menu.delete",
+        "command": "inline.menu.item.delete",
         "title": "Delete Item"
       },
       {
@@ -73,7 +73,7 @@
           "group": "inline"
         },
         {
-          "command": "inline.item.delete",
+          "command": "inline.menu.item.delete",
           "when": "view == inline_notes_view"
         }
       ]

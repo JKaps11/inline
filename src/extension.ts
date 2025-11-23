@@ -2,26 +2,41 @@ import { commands, ExtensionContext, window } from 'vscode';
 import logService from './common/logger';
 import { NoteMenuProvider } from './notes/noteMenuProvider';
 import { FileSystemUtils } from './common/fileSystem';
+import { Registrar } from './common/registrar';
 
 export function activate(context: ExtensionContext) {
 	const fsUtils: FileSystemUtils = new FileSystemUtils();
+	const registrar: Registrar = new Registrar(context);
 
-	// load all of the notes file in directory
-	// create vscode views and such
-	window.createTreeView('inline_notes_view', {
-		treeDataProvider: new NoteMenuProvider(fsUtils),
-		showCollapseAll: true,
-	});
+	registrar.add(
+		window.registerTreeDataProvider('inline_notes_view',
+			new NoteMenuProvider(fsUtils),
+		)
+	);
 
-	// const disposable = vscode.commands.registerCommand('inline.helloWorld', () => {
-	// 	// The code you place here will be executed every time your command is executed
-	// 	// Display a message box to the user
-	// 	vscode.window.showInformationMessage('Hello World from inline!');
-	// });
-	const disposable = commands.registerCommand('inline.activityBar', () => {
 
-	})
-	context.subscriptions.push(disposable);
+	registrar.add(
+		// TODO: Figure out where to add new file/note directory wise. should mimic normal vscode behavior
+		commands.registerCommand("inline.note.add", async () => {
+			// fsUtils.createFile();
+
+		}),
+
+		commands.registerCommand("inline.file.add", async () => {
+			// show popup to enter name?
+
+			fsUtils.createFolder();
+		}),
+
+		commands.registerCommand("inline.menu.delete", async () => {
+			//delete
+			fsUtils.deleteFolder();
+		}),
+
+		commands.registerCommand("inline.note.edit", async () => {
+			//change name
+		}),
+	);
 }
 
 export function deactivate(): void {
