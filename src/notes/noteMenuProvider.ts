@@ -14,7 +14,7 @@ export class NoteMenuProvider implements TreeDataProvider<(NoteMenuItem | Folder
         if (!element) {
             const notesFolder: Folder = this.fsUtils.getNotesFolder();
             const notesFolderMenuItem: FolderMenuItem = new FolderMenuItem(notesFolder, TreeItemCollapsibleState.Expanded);
-            return Promise.resolve([]);
+            return Promise.resolve([notesFolderMenuItem]);
         }
 
         if (element instanceof FolderMenuItem) {
@@ -32,10 +32,10 @@ export class NoteMenuProvider implements TreeDataProvider<(NoteMenuItem | Folder
                                 const newFolder: Folder = new Folder(name, newRelativePath);
                                 return new FolderMenuItem(newFolder, TreeItemCollapsibleState.Collapsed);
                             case FileType.File:
-                                const noteUri: Uri = this.fsUtils.getFullPath(newRelativePath);
-                                return new NoteMenuItem(name, noteUri);
+                                return new NoteMenuItem(name, relativePath, this.fsUtils);
                             default:
                                 window.showWarningMessage("There is an unkown folder type in your notes folder");
+                                return [];
                         }
                     });
                 });

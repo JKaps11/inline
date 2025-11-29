@@ -10,7 +10,7 @@ interface ChildItem {
 export class Folder {
     private id: string;
     private name: string;
-    private readonly relativePath: string;
+    private relativePath: string;
     /**We are using child names for indexing and behavior since the file system saves our state and file names are unique*/
     // private children: ChildItem[] = [];
 
@@ -38,33 +38,7 @@ export class Folder {
         this.name = name;
     }
 
-    // public addChild(fileId: string, name: string): void {
-    //     this.children.forEach((child: ChildItem) => {
-    //         if (child.name === name) {
-    //             throw new ErrorForDisplay(`File of name: ${name} already exists in this directory`);
-    //         }
-
-    //         if (child.id === fileId) {
-    //             throw new InternalError(`Id collision happened for id ${fileId}`);
-    //         }
-    //     });
-
-    //     this.children.push({
-    //         id: fileId,
-    //         name: name,
-    //     });
-    // }
-
-    // public getChildren(): ChildItem[] {
-    //     return this.children;
-    // }
-
-    // public deleteChild(name: string): void {
-    //     const startLength = this.children.length;
-    //     this.children.filter((child: ChildItem) => child.name !== name);
-    //     if (startLength === this.children.length) {
-    //         // This should be an internal error unless we let user give a name we don't provider (cli feature)
-    //         throw new InternalError(`File with name: ${name} not found in directory: ${this.relativePath}`);
-    //     }
-    // }
+    public setRelativePath(relativePath: string): void {
+        this.relativePath = relativePath;
+    }
 }

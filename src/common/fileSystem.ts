@@ -1,6 +1,7 @@
 import { FileType, Uri, workspace, WorkspaceEdit } from "vscode";
 import { AppError, ErrorForDisplay } from "../models/errors";
 import { Folder } from "../models/folder";
+import logService from "./logger";
 
 export class FileSystemUtils {
     /**Base directory where all of the files for this extension is store */
@@ -102,8 +103,8 @@ export class FileSystemUtils {
         }
     }
 
-    public async createFile(relativePath: string, title: string): Promise<void> {
-        const newFileUri: Uri = Uri.joinPath(this.notesFilePath, relativePath, title);
+    public async createFile(relativePath: string): Promise<void> {
+        const newFileUri: Uri = Uri.joinPath(this.notesFilePath, relativePath);
 
         try {
             const wsEdit = new WorkspaceEdit();
@@ -113,4 +114,24 @@ export class FileSystemUtils {
             throw AppError.fromUnknown(error, "Error creating new file");
         }
     }
+
+    /**Renames a file and returns the new relative path */
+    public async renameFileOrFolder(relativePath: string, newName: string): Promise<string> {
+        const fileUri: Uri = Uri.joinPath(this.notesFilePath, relativePath);
+
+        const pathEndIdx: number = relativePath.lastIndexOf('/');
+        const newRelativePath: string = `${relativePath.slice(0, pathEndIdx)}/${newName}`;
+        const newFileUri: Uri = Uri.joinPath(this.notesFilePath, newRelativePath);
+
+        try {
+            workspace.fs.rename(fileUri, newFileUri);
+        } catch (error: unknown) {
+            //TODO: confrim error type here
+            logService.error(JSON.stringify(error));
+            throw new ErrorForDisplay("Error creating new file");
+        }
+
+        return newRelativePath;
+    }
+
 }
