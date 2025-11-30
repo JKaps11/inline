@@ -4,31 +4,78 @@ import { Folder } from "../models/folder";
 import logService from "./logger";
 
 export class FileSystemUtils {
-    /**Base directory where all of the files for this extension is store */
-    private notesFilePath: Uri;
-    private notesFolder: Folder;
+    /**Base directory where all of the files for this extension are stored */
+    private notesFilePath: Uri = Uri.file("/dev/null");
+    private codeFilePath: Uri = Uri.file("/dev/null");
 
-    /**Directory where inline notes for code go. Matches directaly with your code structure*/
-    private codeFilePath: Uri;
+    private notesFolder: Folder = new Folder("invalid", "");
+
+    private isInWorkspaceFolder: boolean;
+    private isWritableFileSystem: boolean | undefined;
 
     constructor() {
-        const workspaceFolder = workspace.workspaceFolders?.[0];
-        if (!workspaceFolder) {
-            throw new ErrorForDisplay("Workspace has no folder");
-        }
+        this.isInWorkspaceFolder = !!workspace.workspaceFolders?.[0];
+        this.isWritableFileSystem = workspace.fs.isWritableFileSystem("file");
+    }
 
-        //TODO check if this is needed
-        if (!workspace.fs.isWritableFileSystem('file')) {
-            throw new ErrorForDisplay("Workspace system is not writable");
-        }
-        this.notesFilePath = Uri.joinPath(workspaceFolder.uri, "/inline-notes");
-        this.codeFilePath = Uri.joinPath(this.notesFilePath, "/code");
+    /**
+     * Must be called when the workspace changes.
+     * Initializes real file paths only when ready.
+     */
+    public initializeForWorkspace() {
+        this.ensureReady();
 
-        //TODO: this is really unstable. maybe an ensure notes file is created or something
-        this.createFolder("");
+        const root = workspace.workspaceFolders![0].uri;
+
+        this.notesFilePath = Uri.joinPath(root, "inline-notes");
+        this.codeFilePath = Uri.joinPath(this.notesFilePath, "code");
+
+        // Ensure base folders exist
+        this.ensureFolderExists(this.notesFilePath);
+        this.ensureFolderExists(this.codeFilePath);
 
         this.notesFolder = new Folder("inline-notes", "");
     }
+
+    /**
+     * Guard: prevents all FS operations when workspace is unavailable
+     */
+    public isReadyQuiet(): boolean {
+        return this.isInWorkspaceFolder && this.isWritableFileSystem === true;
+    }
+
+    private ensureReady() {
+        if (!this.isInWorkspaceFolder) {
+            throw new ErrorForDisplay("Open a folder to use Inline Notes.");
+        }
+
+        if (!this.isWritableFileSystem) {
+            throw new ErrorForDisplay("File system is read-only.");
+        }
+    }
+
+    /**
+     * Wraps all public FS operations to avoid repeating ensureReady().
+     */
+    private async withReady<T>(fn: () => Promise<T>): Promise<T> {
+        this.ensureReady();
+        return fn();
+    }
+
+    /**
+     * Ensures a folder exists, but does not throw if it already exists.
+     */
+    private async ensureFolderExists(uri: Uri): Promise<void> {
+        try {
+            await workspace.fs.stat(uri);
+        } catch {
+            await workspace.fs.createDirectory(uri);
+        }
+    }
+
+    // ------------------------------------------------------------
+    // PUBLIC API
+    // ------------------------------------------------------------
 
     public getNotesFolder(): Folder {
         return this.notesFolder;
@@ -38,100 +85,70 @@ export class FileSystemUtils {
         return Uri.joinPath(this.notesFilePath, relativePath);
     }
 
-    /**Traverses notes directory and gets menu items to populate notes menu.
-     * We do this at the start of every activation of extension 
-     * so multiple users can work on same codebase with same notes
-     */
-    // public async loadExtensionSpecficFilesInProject(): Promise<MenuItems> {
-    //     let inlineContext: MenuItems = { folders: [], notes: [] };
-
-    //     const notesFolder: Folder = this.ensureNotesFolder();
-    //     // const codeFolder: Folder = this.ensureCodeFolder();
-
-    //     const [nNotes, nFolders]: [notes: { name: string, id: string }[], folders: Folder[]] = this.readNotesFolder()
-    //     // const [cNotes, cFolders]: [notes: {name: string, id: string}[], folders: Folder[]] = this.readCodeFolder()
-
-    //     inlineContext.folders = nFolders.map((folder) => new FolderMenuItem(folder, TreeItemCollapsibleState.Collapsed));
-
-    //     const folderContents = this.retrieveFolderContents(relativePath);
-    //     folderContents.then((contents) => {
-    //         contents.map((content) => {
-    //             const name: string = content[0];
-    //             switch (content[1]) {
-    //                 case FileType.Directory:
-    //                     const folder: Folder()
-    //                 // get children and apply
-    //                 // inlineContext.folders.push(new FolderMenuItem(name, TreeItemCollapsibleState.Collapsed))
-    //                 //repeat process
-    //                 case FileType.File:
-    //                     return new NoteMenuItem(name);
-    //                 default:
-    //                     window.showWarningMessage("There is an unkown folder type in your notes folder");
-    //             }
-    //         });
-    //     });
-
-
-    //     return notes;
-    // }
-
-    public async createFolder(relativePath: string): Promise<void> {
-        try {
-            const newFilePath: Uri = Uri.joinPath(this.notesFilePath, relativePath);
-            await workspace.fs.createDirectory(newFilePath);
-        } catch (error: unknown) {
-            throw AppError.fromUnknown(error, "Error while creating a folder");
-        }
+    public createFolder(relativePath: string): Promise<void> {
+        return this.withReady(async () => {
+            try {
+                const newFolder = Uri.joinPath(this.notesFilePath, relativePath);
+                await workspace.fs.createDirectory(newFolder);
+            } catch (error) {
+                throw AppError.fromUnknown(error, "Error while creating a folder");
+            }
+        });
     }
 
-    public async deleteFolder(relativePath: string): Promise<void> {
-        try {
-            const deleteFilePath: Uri = Uri.joinPath(this.notesFilePath, relativePath);
-            await workspace.fs.delete(deleteFilePath);
-        } catch (error: unknown) {
-            throw AppError.fromUnknown(error, "Error while creating a folder");
-        }
+    public deleteFolder(relativePath: string): Promise<void> {
+        return this.withReady(async () => {
+            try {
+                const target = Uri.joinPath(this.notesFilePath, relativePath);
+                await workspace.fs.delete(target, { recursive: true });
+            } catch (error) {
+                throw AppError.fromUnknown(error, "Error while deleting a folder");
+            }
+        });
     }
 
-    /**Returns a list of child names and their filetype from a directory */
-    public async retrieveFolderContents(relativePath: string): Promise<[string, FileType][]> {
-        try {
-            const filePath: Uri = Uri.joinPath(this.notesFilePath, relativePath);
-            return await workspace.fs.readDirectory(filePath);
-        } catch (error: unknown) {
-            throw AppError.fromUnknown(error, "Error while retrieving folder contents");
-        }
+    /**Returns a list of child names and file types from a directory */
+    public retrieveFolderContents(relativePath: string): Promise<[string, FileType][]> {
+        return this.withReady(async () => {
+            try {
+                const dirUri = Uri.joinPath(this.notesFilePath, relativePath);
+                return await workspace.fs.readDirectory(dirUri);
+            } catch (error) {
+                throw AppError.fromUnknown(error, "Error retrieving folder contents");
+            }
+        });
     }
 
-    public async createFile(relativePath: string): Promise<void> {
-        const newFileUri: Uri = Uri.joinPath(this.notesFilePath, relativePath);
-
-        try {
-            const wsEdit = new WorkspaceEdit();
-            wsEdit.createFile(newFileUri);
-            await workspace.applyEdit(wsEdit);
-        } catch (error: unknown) {
-            throw AppError.fromUnknown(error, "Error creating new file");
-        }
+    public createFile(relativePath: string): Promise<void> {
+        return this.withReady(async () => {
+            try {
+                const fileUri = Uri.joinPath(this.notesFilePath, relativePath);
+                const edit = new WorkspaceEdit();
+                edit.createFile(fileUri, { overwrite: false });
+                await workspace.applyEdit(edit);
+            } catch (error) {
+                throw AppError.fromUnknown(error, "Error creating new file");
+            }
+        });
     }
 
-    /**Renames a file and returns the new relative path */
-    public async renameFileOrFolder(relativePath: string, newName: string): Promise<string> {
-        const fileUri: Uri = Uri.joinPath(this.notesFilePath, relativePath);
+    /**Renames a file or folder and returns the new relative path */
+    public renameFileOrFolder(relativePath: string, newName: string): Promise<string> {
+        return this.withReady(async () => {
+            const oldUri = Uri.joinPath(this.notesFilePath, relativePath);
 
-        const pathEndIdx: number = relativePath.lastIndexOf('/');
-        const newRelativePath: string = `${relativePath.slice(0, pathEndIdx)}/${newName}`;
-        const newFileUri: Uri = Uri.joinPath(this.notesFilePath, newRelativePath);
+            const lastSlash = relativePath.lastIndexOf("/");
+            const newRelative = `${relativePath.slice(0, lastSlash)}/${newName}`;
+            const newUri = Uri.joinPath(this.notesFilePath, newRelative);
 
-        try {
-            workspace.fs.rename(fileUri, newFileUri);
-        } catch (error: unknown) {
-            //TODO: confrim error type here
-            logService.error(JSON.stringify(error));
-            throw new ErrorForDisplay("Error creating new file");
-        }
+            try {
+                await workspace.fs.rename(oldUri, newUri, { overwrite: false });
+            } catch (error) {
+                logService.error(JSON.stringify(error));
+                throw new ErrorForDisplay("Error renaming file or folder");
+            }
 
-        return newRelativePath;
+            return newRelative;
+        });
     }
-
 }

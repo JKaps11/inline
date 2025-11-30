@@ -1,4 +1,4 @@
-import { Command, commands, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
+import { ThemeIcon, TreeItem, TreeItemCollapsibleState } from "vscode";
 import { FileSystemUtils } from "../common/fileSystem";
 
 export class NoteMenuItem extends TreeItem {
@@ -9,7 +9,8 @@ export class NoteMenuItem extends TreeItem {
             command: 'vscode.openFolder',
             arguments: [fsUtils.getFullPath(this.relativePath)]
         };
-        this.iconPath; // TODO: note icon
+        // TODO: Setup note icon by note type
+        this.iconPath = ThemeIcon.File;
         this.id = crypto.randomUUID();
     }
 

@@ -1,4 +1,4 @@
-import { TreeItem, TreeItemCollapsibleState } from "vscode";
+import { ThemeIcon, TreeItem, TreeItemCollapsibleState } from "vscode";
 import { Folder } from "../models/folder";
 
 export class FolderMenuItem extends TreeItem {
@@ -8,7 +8,7 @@ export class FolderMenuItem extends TreeItem {
         public readonly collapsibleState: TreeItemCollapsibleState
     ) {
         super(folder.getName(), collapsibleState);
-        this.iconPath; //TODO hook up folder icon
+        this.iconPath = ThemeIcon.Folder;
         this.id = folder.getId();
         this.folder = folder;
     }

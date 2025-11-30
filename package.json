@@ -1,8 +1,18 @@
 {
   "name": "inline",
-  "displayName": "inline",
-  "description": "An efficient and quick note taking app for your organization needs in a small project",
-  "version": "0.0.1",
+  "displayName": "Inline Notes",
+  "description": "An efficient and quick note taking app for your organizational needs in a project",
+  "version": "0.1.0",
+  "license": "MIT",
+  "keywords": [
+    "notes",
+    "inline",
+    "todo",
+    "task"
+  ],
+  "publisher": "JKaps11",
+  "icon": "TODO do a icon here",
+  "repository": "https://github.com/JKaps11/inline",
   "engines": {
     "vscode": "^1.106.0"
   },
@@ -14,26 +24,22 @@
   "contributes": {
     "commands": [
       {
-        "command": "inline.note.add",
-        "title": "Add Note"
-      },
-      {
         "command": "inline.file.add",
-        "title": "Add File"
+        "title": "$Add File"
       },
       {
         "command": "inline.menu.item.delete",
         "title": "Delete Item"
       },
       {
-        "command": "inline.note.edit",
-        "title": "Edit Note"
+        "command": "inline.note.edit.name",
+        "title": "Edit Name"
       }
     ],
     "viewsWelcome": [
       {
         "view": "inline_notes_view",
-        "contents": "Start by creating a note with the plus icon above!"
+        "contents": "Start by opening a workspace and creating a note with the plus icon above!"
       }
     ],
     "viewsContainers": {
@@ -46,11 +52,11 @@
       ]
     },
     "views": {
-      "activitybar": [
+      "inline_view_container": [
         {
           "id": "inline_notes_view",
           "name": "Inline Notes",
-          "contextualTitle": "Inline",
+          "contextualTitle": "Inline Notes",
           "icon": "images/notebook-icon.svg"
         }
       ]
@@ -58,17 +64,13 @@
     "menus": {
       "view/title": [
         {
-          "command": "inline.note.add",
-          "when": "view == inline_notes_view"
-        },
-        {
           "command": "inline.file.add",
           "when": "view == inline_notes_view"
         }
       ],
       "view/item/context": [
         {
-          "command": "inline.note.edit",
+          "command": "inline.note.edit.name",
           "when": "view == inline_notes_view",
           "group": "inline"
         },

@@ -1,5 +1,5 @@
 What needs to be done
-- commands for view continaer
+- icon paths
 - test that this works
 - handle edge cases like delete notes folder after execution.
     - you can do a workspace.onFilecreated i think   

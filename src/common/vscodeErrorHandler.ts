@@ -9,17 +9,17 @@ export function handleVsCodeError(error: unknown): void {
             ? error.message
             : "An error has occurred within the Inline extension.";
 
-        window.showErrorMessage(`${userMessage} ${DEFAULT_SUPPORT_MESSAGE}`);
+        window.showErrorMessage(`${userMessage}\n${DEFAULT_SUPPORT_MESSAGE}`);
         logService.error(error.message, error);
         return;
     }
 
     if (error instanceof Error) {
-        window.showErrorMessage("An error has occurred within the Inline extension. " + DEFAULT_SUPPORT_MESSAGE);
+        window.showErrorMessage("An error has occurred within the Inline extension. " + '\n' + DEFAULT_SUPPORT_MESSAGE);
         logService.error(error.message, error);
         return;
     }
 
-    window.showErrorMessage("An unknown error has occurred. " + DEFAULT_SUPPORT_MESSAGE);
+    window.showErrorMessage("An unknown error has occurred. " + '\n' + DEFAULT_SUPPORT_MESSAGE);
     logService.error("Unknown non-Error thrown", error);
 }
